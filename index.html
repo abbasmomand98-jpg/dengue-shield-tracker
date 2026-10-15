@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dengue Shield — Outbreak Tracker &amp; Prevention</title>
+<meta name="description" content="Dengue Shield is a UX concept: a dengue outbreak tracker for Pakistani cities — hotspot risk maps, a symptom checker with warning-sign triage, a home prevention planner, breeding-site reporting and a platelet donor directory.">
+<style>
+  :root{
+    --lime:#65A30D; --lime-dark:#4C7A0A; --lime-soft:#F0F7E3; --lime-softer:#F7FBF0;
+    --ink:#1F2937; --muted:#6B7280; --line:#E8EEE0; --bg:#FCFEFA; --card:#FFFFFF;
+    --low:#16A34A; --mod:#D97706; --high:#DC2626;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px; margin:0 auto; padding:0 18px 56px}
+
+  /* ---------- header ---------- */
+  header.top{position:sticky; top:0; z-index:20; background:rgba(252,254,250,.95);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+  .top-inner{max-width:640px; margin:0 auto; padding:12px 18px; display:flex; align-items:center; gap:12px}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.3rem; letter-spacing:-.02em}
+  .brand .shield{width:34px; height:34px; border-radius:12px; background:linear-gradient(135deg,var(--lime),var(--lime-dark));
+    display:grid; place-items:center; color:#fff; font-size:1.15rem}
+  .citysel{margin-left:auto; display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--muted)}
+  select, input, textarea{font:inherit; padding:9px 12px; border-radius:12px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink)}
+  select:focus, input:focus, textarea:focus{outline:2px solid var(--lime); outline-offset:1px}
+  select{font-weight:600; cursor:pointer}
+
+  .kicker{display:inline-block; margin:26px 0 10px; font-size:.78rem; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--lime-dark); background:var(--lime-soft);
+    padding:6px 14px; border-radius:999px}
+  h1{font-size:2rem; line-height:1.2; letter-spacing:-.02em; margin-bottom:8px}
+  .lede{color:var(--muted); font-size:1.02rem; max-width:34em; margin-bottom:20px}
+  .sample-note{font-size:.78rem; color:var(--muted); background:var(--lime-softer); border:1px dashed var(--lime);
+    border-radius:12px; padding:10px 14px; margin-bottom:22px}
+
+  /* ---------- risk hero card ---------- */
+  .risk-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 22px; margin-bottom:22px; box-shadow:0 10px 30px rgba(101,163,13,.08)}
+  .risk-top{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap}
+  .risk-num{font-size:3.2rem; font-weight:800; letter-spacing:-.04em; line-height:1}
+  .risk-city{font-size:.9rem; color:var(--muted); margin-top:4px}
+  .band{display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:.95rem;
+    padding:8px 16px; border-radius:999px; color:#fff; margin-top:10px}
+  .band i{width:10px; height:10px; border-radius:50%; background:#fff; opacity:.85}
+  .risk-advice{font-size:.93rem; color:#374151; margin-top:12px}
+  .trend-wrap{margin-top:20px}
+  .trend-cap{display:flex; justify-content:space-between; font-size:.78rem; color:var(--muted); margin-bottom:6px}
+  svg.trend{width:100%; height:120px; display:block}
+  .trend-days{display:flex; justify-content:space-between; font-size:.7rem; color:var(--muted); margin-top:4px}
+
+  /* ---------- hotspot cards ---------- */
+  section.block{margin:36px 0}
+  h2{font-size:1.35rem; letter-spacing:-.015em; margin-bottom:6px}
+  .sub{color:var(--muted); font-size:.94rem; margin-bottom:16px}
+  .hotspot{background:var(--card); border:1px solid var(--line); border-left:5px solid var(--high);
+    border-radius:14px; padding:15px 17px; margin-bottom:12px; display:flex; gap:14px; align-items:center}
+  .hotspot .hc{font-size:1.6rem; font-weight:800; color:var(--high); min-width:56px; text-align:center}
+  .hotspot .hc small{display:block; font-size:.68rem; font-weight:600; color:var(--muted)}
+  .hotspot h3{font-size:1rem}
+  .hotspot p{font-size:.86rem; color:var(--muted)}
+  .fogging{background:var(--lime-soft); border:1px solid #D9E8BC; border-radius:14px; padding:14px 17px;
+    font-size:.9rem; margin-top:4px}
+  .fogging b{color:var(--lime-dark)}
+  .btn{display:inline-block; margin-top:16px; background:var(--lime); color:#fff; font-weight:700;
+    padding:13px 24px; border-radius:14px; border:none; font-size:1rem; cursor:pointer; text-decoration:none}
+  .btn:hover{background:var(--lime-dark)}
+  .btn.ghost{background:#fff; color:var(--lime-dark); border:1.5px solid var(--lime)}
+
+  /* ---------- symptom checker ---------- */
+  .check-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px}
+  .q{margin-bottom:18px}
+  .q-label{font-weight:700; font-size:.98rem; margin-bottom:10px}
+  .chip-row{display:flex; flex-wrap:wrap; gap:10px}
+  .chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:9px 18px;
+    font:inherit; font-size:.9rem; font-weight:600; cursor:pointer; transition:all .15s; color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:#fff}
+  .verdict{border-radius:var(--radius); padding:20px; margin-top:10px; display:none}
+  .verdict.show{display:block}
+  .verdict.emergency{background:#FEF2F2; border:1.5px solid #FECACA}
+  .verdict.today{background:#FFFBEB; border:1.5px solid #FDE68A}
+  .verdict.monitor{background:#F0FDF4; border:1.5px solid #BBF7D0}
+  .verdict h3{font-size:1.15rem; margin-bottom:6px}
+  .verdict p{font-size:.93rem; color:#374151}
+  .redflags{margin:12px 0 0; padding:0; list-style:none}
+  .redflags li{padding:8px 0 8px 28px; position:relative; font-size:.9rem; font-weight:600}
+  .redflags li::before{content:"!"; position:absolute; left:0; top:8px; width:20px; height:20px;
+    background:var(--high); color:#fff; border-radius:50%; font-size:.75rem; font-weight:800;
+    display:grid; place-items:center}
+  .flag-list{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:14px}
+  .flag-list h4{font-size:.85rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:8px}
+  .flag-list ul{list-style:none}
+  .flag-list li{font-size:.9rem; padding:5px 0 5px 26px; position:relative}
+  .flag-list li::before{content:"•"; position:absolute; left:8px; color:var(--high); font-weight:800}
+
+  /* ---------- prevention ---------- */
+  .prev-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:16px}
+  .checklist{list-style:none; margin-top:6px}
+  .checklist li{display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-bottom:1px solid #F3F6EE; font-size:.94rem}
+  .checklist li:last-child{border-bottom:none}
+  .checklist input[type="checkbox"]{width:22px; height:22px; margin-top:2px; accent-color:var(--lime); cursor:pointer}
+  .checklist li.done span{color:var(--muted); text-decoration:line-through}
+  .progress{height:10px; background:#EDF3E4; border-radius:99px; margin:14px 0 6px; overflow:hidden}
+  .progress span{display:block; height:100%; background:var(--lime); border-radius:99px; transition:width .3s}
+  .progress-label{font-size:.85rem; color:var(--muted)}
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; font-size:.94rem}
+  .switch{position:relative; width:52px; height:30px; flex:none; cursor:pointer}
+  .switch input{opacity:0; width:100%; height:100%; position:absolute; cursor:pointer; margin:0}
+  .slider{position:absolute; inset:0; background:#D8DECF; border-radius:99px; transition:.2s}
+  .slider::before{content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; background:#fff;
+    border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .slider{background:var(--lime)}
+  .switch input:checked + .slider::before{transform:translateX(22px)}
+  .repellent{display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:12px 0; border-bottom:1px dashed var(--line); font-size:.94rem}
+  .repellent:last-child{border-bottom:none}
+  .repellent .r-price{font-weight:800; white-space:nowrap; color:var(--lime-dark)}
+
+  /* ---------- report form ---------- */
+  .form-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px}
+  .field{margin-bottom:14px}
+  .field label{display:block; font-size:.85rem; font-weight:700; margin-bottom:6px}
+  .field input, .field select, .field textarea{width:100%}
+  .field textarea{min-height:88px; resize:vertical}
+  .field .err{font-size:.8rem; color:var(--high); margin-top:4px; display:none}
+  .field.invalid .err{display:block}
+  .field.invalid input, .field.invalid select{border-color:var(--high)}
+  .confirm{display:none; background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:var(--radius);
+    padding:20px; margin-top:16px}
+  .confirm.show{display:block}
+  .confirm h3{color:var(--low); margin-bottom:6px}
+  .confirm .ref{font-family:ui-monospace,monospace; font-weight:700; background:#fff;
+    display:inline-block; padding:4px 12px; border-radius:8px; margin-top:8px; border:1px solid #BBF7D0}
+
+  /* ---------- donors ---------- */
+  .donor{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+    margin-bottom:10px; display:flex; align-items:center; gap:14px}
+  .donor .bg{width:46px; height:46px; border-radius:14px; background:var(--high); color:#fff; font-weight:800;
+    display:grid; place-items:center; font-size:.95rem; flex:none}
+  .donor .d-info{flex:1}
+  .donor .d-info h3{font-size:.98rem}
+  .donor .d-info p{font-size:.83rem; color:var(--muted)}
+  .donor .call{border:1.5px solid var(--lime); color:var(--lime-dark); background:#fff; font-weight:700;
+    border-radius:12px; padding:9px 16px; font-size:.88rem; cursor:pointer; font-family:inherit}
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:var(--ink);
+    color:#fff; padding:12px 20px; border-radius:12px; font-size:.9rem; opacity:0; pointer-events:none;
+    transition:all .25s; z-index:50; max-width:90vw; text-align:center}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  footer{margin-top:48px; padding-top:20px; border-top:1px solid var(--line); font-size:.82rem; color:var(--muted)}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="shield">🛡</span> Dengue Shield</div>
+    <label class="citysel">City
+      <select id="citySelect" aria-label="Choose your city"></select>
+    </label>
+  </div>
+</header>
+
+<div class="wrap">
+  <span class="kicker">Outbreak tracker · Oct–Nov season</span>
+  <h1>Is your mohalla a dengue hotspot right now?</h1>
+  <p class="lede">Dengue Shield answers the three questions every Pakistani family asks each October: how bad is it near me, which symptoms mean rush to hospital <em>today</em>, and what actually stops mosquitoes breeding at home.</p>
+  <div class="sample-note">⚠️ Concept demo — all case counts, risk scores and donor listings on this page are <b>illustrative sample data</b> for design purposes, not live health data.</div>
+
+  <!-- ============ 1 · RISK DASHBOARD ============ -->
+  <div class="risk-card" id="dashboard">
+    <div class="risk-top">
+      <div>
+        <div class="risk-num" id="riskNum">–</div>
+        <div class="risk-city" id="riskCity">Risk index</div>
+        <span class="band" id="riskBand"><i></i><span>–</span></span>
+      </div>
+    </div>
+    <p class="risk-advice" id="riskAdvice"></p>
+    <div class="trend-wrap">
+      <div class="trend-cap"><span>New cases · last 7 days (sample)</span><span id="trendTotal"></span></div>
+      <svg class="trend" id="trendChart" viewBox="0 0 600 120" preserveAspectRatio="none" role="img" aria-label="7-day case trend chart"></svg>
+      <div class="trend-days" id="trendDays"></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <h2>🔥 Hotspot alerts near you</h2>
+    <p class="sub">Areas reporting the most new cases this week. Fogging teams are dispatched to red zones first.</p>
+    <div id="hotspots"></div>
+    <div class="fogging" id="fogging"></div>
+    <a class="btn" href="#report">Report a breeding site</a>
+  </section>
+
+  <!-- ============ 2 · SYMPTOM CHECKER ============ -->
+  <section class="block" id="symptoms">
+    <h2>🩺 Symptom checker</h2>
+    <p class="sub">Answer a few questions. Dengue warning signs are detected automatically — never ignore a red verdict.</p>
+    <div class="check-card">
+      <div class="q">
+        <div class="q-label">1. How many days of fever?</div>
+        <div class="chip-row" id="qFever">
+          <button class="chip" data-v="0" aria-pressed="true">No fever</button>
+          <button class="chip" data-v="1" aria-pressed="false">1–2 days</button>
+          <button class="chip" data-v="3" aria-pressed="false">3–4 days</button>
+          <button class="chip" data-v="5" aria-pressed="false">5+ days</button>
+        </div>
+      </div>
+      <div class="q">
+        <div class="q-label">2. Rash on the skin?</div>
+        <div class="chip-row" id="qRash">
+          <button class="chip" data-v="no" aria-pressed="true">No</button>
+          <button class="chip" data-v="yes" aria-pressed="false">Yes</button>
+        </div>
+      </div>
+      <div class="q">
+        <div class="q-label">3. Any of these warning signs?</div>
+        <div class="chip-row" id="qWarn" style="margin-bottom:10px">
+          <button class="chip" data-v="bleeding" aria-pressed="false">Bleeding gums / nose</button>
+          <button class="chip" data-v="pain" aria-pressed="false">Severe abdominal pain</button>
+        </div>
+        <div class="chip-row" id="qWarn2">
+          <button class="chip" data-v="vomiting" aria-pressed="false">Persistent vomiting</button>
+          <button class="chip" data-v="drowsy" aria-pressed="false">Drowsiness / dizziness</button>
+        </div>
+      </div>
+      <div class="verdict" id="verdict">
+        <h3 id="verdictTitle"></h3>
+        <p id="verdictText"></p>
+        <ul class="redflags" id="verdictFlags"></ul>
+      </div>
+      <div class="flag-list">
+        <h4>🚨 Rush to hospital if you notice</h4>
+        <ul>
+          <li>Severe abdominal pain or tenderness</li>
+          <li>Persistent vomiting (can't keep fluids down)</li>
+          <li>Bleeding from gums, nose, or in vomit/stool</li>
+          <li>Drowsiness, restlessness or sudden dizziness</li>
+          <li>No urine for 6+ hours (dehydration sign)</li>
+        </ul>
+      </div>
+      <a class="btn ghost" href="#donors" style="margin-top:16px">Find platelet donors</a>
+    </div>
+  </section>
+
+  <!-- ============ 3 · PREVENTION PLANNER ============ -->
+  <section class="block" id="prevention">
+    <h2>🏠 Prevention planner</h2>
+    <p class="sub">Dengue mosquitoes breed in clean standing water <em>inside</em> your home. Clear these once a week — your checklist is saved on this device.</p>
+    <div class="prev-card">
+      <h3 style="font-size:1.05rem; margin-bottom:4px">Weekly breeding-site checklist</h3>
+      <div class="progress"><span id="checkProgress" style="width:0%"></span></div>
+      <div class="progress-label" id="checkLabel">0 of 8 cleared</div>
+      <ul class="checklist" id="checklist"></ul>
+      <div class="toggle-row">
+        <span><b>Weekly reminder</b><br><span style="font-size:.84rem; color:var(--muted)" id="reminderNote">Remind me every Sunday morning</span></span>
+        <label class="switch"><input type="checkbox" id="reminderToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+    <div class="prev-card">
+      <h3 style="font-size:1.05rem; margin-bottom:4px">🦟 Repellent guide — PKR prices</h3>
+      <p class="sub" style="margin-bottom:8px">Honest prices so you can budget protection for the whole family.</p>
+      <div id="repellents"></div>
+    </div>
+    <div class="prev-card" style="background:var(--lime-soft); border-color:#D9E8BC">
+      <h3 style="font-size:1.05rem">💨 Request fogging in your street</h3>
+      <p style="font-size:.92rem; color:#374151">If mosquitoes are out of control in your area, report it — fogging teams prioritize streets with the most reports.</p>
+      <a class="btn" href="#report">Request fogging</a>
+    </div>
+  </section>
+
+  <!-- ============ 4 · REPORT BREEDING SITE ============ -->
+  <section class="block" id="report">
+    <h2>📍 Report a breeding site</h2>
+    <p class="sub">Spotted stagnant water, an open tank or dumped tires? Report it and the local team gets a ticket.</p>
+    <div class="form-card">
+      <form id="reportForm" novalidate>
+        <div class="field" id="fArea">
+          <label for="areaInput">Area / mohalla</label>
+          <input id="areaInput" type="text" placeholder="e.g. Johar Town, Block H">
+          <div class="err">Please enter the area name.</div>
+        </div>
+        <div class="field" id="fType">
+          <label for="typeInput">Type of breeding site</label>
+          <select id="typeInput">
+            <option value="">Choose a type…</option>
+            <option>Stagnant water pool</option>
+            <option>Open rooftop water tank</option>
+            <option>Discarded tires</option>
+            <option>Garbage dump</option>
+            <option>Construction site water</option>
+            <option>Other</option>
+          </select>
+          <div class="err">Please choose a site type.</div>
+        </div>
+        <div class="field">
+          <label for="descInput">Details <span style="font-weight:400; color:var(--muted)">(optional)</span></label>
+          <textarea id="descInput" placeholder="Anything that helps the team find it — landmarks, size…"></textarea>
+        </div>
+        <button class="btn" type="submit">Submit report</button>
+      </form>
+      <div class="confirm" id="reportConfirm">
+        <h3>✅ Report received</h3>
+        <p id="confirmText"></p>
+        <span class="ref" id="confirmRef"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · PLATELET DONORS ============ -->
+  <section class="block" id="donors">
+    <h2>🩸 Platelet donor directory</h2>
+    <p class="sub">Platelet counts crash in severe dengue. These volunteers donate on short notice — call directly.</p>
+    <div id="donorList"></div>
+    <div class="sample-note" style="margin-top:14px">Sample listings for the concept demo — phone numbers are masked.</div>
+  </section>
+
+  <footer>
+    <b>Dengue Shield</b> — a UX concept by Abbas Momand. All data on this page is illustrative sample data for design purposes, not medical advice. In a real emergency, call your local hospital or rescue service (1122 in Pakistan).
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* =====================================================================
+   DENGUE SHIELD — core logic
+   Everything data-driven and DOM-free lives here so it can be unit-tested
+   in plain Node. The UI wiring at the bottom only runs in a browser.
+   All numbers below are ILLUSTRATIVE sample data for the concept demo.
+   ===================================================================== */
+
+/* ---- per-city outbreak data (illustrative sample data) ---- */
+var CITIES = {
+  lahore: {
+    name: "Lahore", riskIndex: 78,
+    trend: [31, 34, 38, 42, 47, 52, 58],          // new cases, last 7 days
+    hotspots: [
+      { area: "Walled City area", cases: 58, note: "Dense housing, open drains" },
+      { area: "Johar Town",      cases: 41, note: "Construction sites with standing water" },
+      { area: "Model Town",       cases: 33, note: "Rooftop tanks reported uncovered" }
+    ],
+    fogging: "Next fogging drive: <b>Saturday 6 AM</b> — Walled City &amp; Johar Town first."
+  },
+  rawalpindi: {
+    name: "Rawalpindi", riskIndex: 72,
+    trend: [28, 30, 33, 37, 41, 44, 49],
+    hotspots: [
+      { area: "Satellite Town", cases: 49, note: "Tire shops with open stockpiles" },
+      { area: "Dhok Khabba",   cases: 36, note: "Narrow streets, poor drainage" }
+    ],
+    fogging: "Next fogging drive: <b>Friday 6 AM</b> — Satellite Town first."
+  },
+  peshawar: {
+    name: "Peshawar", riskIndex: 66,
+    trend: [22, 25, 29, 33, 38, 42, 46],
+    hotspots: [
+      { area: "University Town", cases: 46, note: "Hostels with uncovered water drums" },
+      { area: "Hayatabad",       cases: 29, note: "Park fountains left stagnant" }
+    ],
+    fogging: "Next fogging drive: <b>Sunday 6 AM</b> — University Town first."
+  },
+  karachi: {
+    name: "Karachi", riskIndex: 54,
+    trend: [18, 20, 23, 26, 29, 33, 36],
+    hotspots: [
+      { area: "Korangi", cases: 36, note: "Industrial runoff pools" },
+      { area: "Landhi",  cases: 24, note: "Open water storage tanks" }
+    ],
+    fogging: "Next fogging drive: <b>Monday 6 AM</b> — Korangi first."
+  },
+  islamabad: {
+    name: "Islamabad", riskIndex: 38,
+    trend: [9, 11, 12, 14, 15, 17, 19],
+    hotspots: [
+      { area: "G-7",  cases: 19, note: "Green belts with stagnant pools" },
+      { area: "I-10", cases: 12, note: "Market area, discarded containers" }
+    ],
+    fogging: "Next fogging drive: <b>Wednesday 6 AM</b> — G-7 first."
+  }
+};
+
+/* ---- risk bands: index 0–100 -> LOW / MODERATE / HIGH ---- */
+function riskBand(index){
+  if (index < 30) return { label: "LOW RISK",      color: "#16A34A",
+    advice: "Cases are low right now. Keep the weekly home checklist going so it stays that way." };
+  if (index < 60) return { label: "MODERATE RISK", color: "#D97706",
+    advice: "Cases are climbing. Clear breeding sites this week and keep repellent handy, especially at dawn and dusk." };
+  return { label: "HIGH RISK", color: "#DC2626",
+    advice: "Outbreak conditions. Check symptoms daily, sleep under a net, and report any breeding site you spot." };
+}
+
+/* ---- symptom triage ----
+   a = { feverDays, rash, bleeding, severePain, vomiting, drowsy }
+   Returns one of three verdicts. Any single warning sign wins. */
+function triage(a){
+  var flags = [];
+  if (a.bleeding)    flags.push("Bleeding gums or nose");
+  if (a.severePain)  flags.push("Severe abdominal pain");
+  if (a.vomiting)    flags.push("Persistent vomiting");
+  if (a.drowsy)      flags.push("Drowsiness or dizziness");
+
+  if (flags.length > 0){
+    return {
+      level: "emergency",
+      title: "🚨 See a doctor TODAY — warning signs present",
+      text: "These are dengue warning signs. Go to a hospital today — do not wait to see if they pass. " +
+            "Avoid aspirin and ibuprofen; paracetamol only for fever, and keep drinking fluids on the way.",
+      flags: flags
+    };
+  }
+  if (a.feverDays >= 3){
+    return {
+      level: "today",
+      title: "🏥 See a doctor TODAY — get a dengue test",
+      text: "Fever for 3+ days in dengue season needs a blood test (NS1 antigen). Go to a clinic or lab today, " +
+            "rest, drink plenty of fluids, and watch for any warning sign above.",
+      flags: []
+    };
+  }
+  if (a.feverDays >= 1){
+    return {
+      level: "monitor",
+      title: "👀 Monitor at home for now",
+      text: "Early days. Rest, drink lots of fluids, use paracetamol for fever (never aspirin/ibuprofen), " +
+            "and re-check here if the fever crosses day 3 or any warning sign appears.",
+      flags: []
+    };
+  }
+  return {
+    level: "monitor",
+    title: "✅ No dengue signs from these answers",
+    text: "No fever reported, so dengue is unlikely right now. Keep up the weekly prevention checklist — " +
+          "stopping breeding is what protects the whole street.",
+    flags: []
+  };
+}
+
+/* ---- report form validation ---- */
+function validateReport(r){
+  var errors = [];
+  if (!r.area || !r.area.trim()) errors.push("area");
+  if (!r.type)                  errors.push("type");
+  return { ok: errors.length === 0, errors: errors };
+}
+function makeRef(){
+  return "DS-2026-" + Math.floor(1000 + Math.random() * 9000);
+}
+
+/* ---- static content data ---- */
+var CHECKLIST = [
+  "Room cooler — drain and scrub the tank",
+  "Flower pot saucers — empty standing water",
+  "Old tires — puncture or store under cover",
+  "Rooftop water tank — keep the lid sealed",
+  "Pet water bowls — change water daily",
+  "AC outdoor tray — clear the drip tray",
+  "Plant vases — change water every 3 days",
+  "Open drums & buckets — cover or overturn"
+];
+var REPELLENTS = [
+  { name: "Mortein mosquito coil (10 pcs)",      price: "Rs 180" },
+  { name: "Mortein vaporizer + refill",          price: "Rs 450" },
+  { name: "Kingtox insecticide spray",            price: "Rs 520" },
+  { name: "Mosquito net — double bed",           price: "Rs 650" },
+  { name: "Repellent lotion (picaridin-based)",   price: "Rs 350" },
+  { name: "Window mesh roll (DIY)",               price: "Rs 1,200" }
+];
+var DONORS = [
+  { name: "Bilal Ahmed",  blood: "O+", area: "Johar Town, Lahore",   last: "Donated 3 weeks ago" },
+  { name: "Sana Tariq",   blood: "B+", area: "Model Town, Lahore",   last: "Donated 2 months ago" },
+  { name: "Usman Ghani",  blood: "A+", area: "Satellite Town, Rwp",  last: "Donated 5 weeks ago" },
+  { name: "Ayesha Khan",  blood: "AB+", area: "Hayatabad, Peshawar", last: "Donated 1 month ago" },
+  { name: "Danish Ali",   blood: "O−", area: "Korangi, Karachi",     last: "Donated 6 weeks ago" }
+];
+
+/* =====================================================================
+   UI WIRING — browser only. Skipped when loaded in Node for testing.
+   ===================================================================== */
+if (typeof document !== "undefined"){
+
+  /* ---- storage helper (falls back to memory when localStorage is off) ---- */
+  var memStore = {};
+  var store = {
+    get: function(k){ try { return localStorage.getItem(k); } catch(e){ return memStore[k] || null; } },
+    set: function(k,v){ try { localStorage.setItem(k,v); } catch(e){ memStore[k] = v; } }
+  };
+
+  /* ---- toast ---- */
+  var toastEl = document.getElementById("toast");
+  var toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 2800);
+  }
+
+  /* ---- city selector + dashboard ---- */
+  var citySelect = document.getElementById("citySelect");
+  Object.keys(CITIES).forEach(function(k){
+    var o = document.createElement("option");
+    o.value = k; o.textContent = CITIES[k].name;
+    citySelect.appendChild(o);
+  });
+  citySelect.value = store.get("ds_city") || "lahore";
+
+  function renderCity(){
+    var key = citySelect.value, c = CITIES[key];
+    store.set("ds_city", key);
+    var band = riskBand(c.riskIndex);
+
+    document.getElementById("riskNum").textContent = c.riskIndex;
+    document.getElementById("riskNum").style.color = band.color;
+    document.getElementById("riskCity").textContent = "Outbreak risk index · " + c.name;
+    var b = document.getElementById("riskBand");
+    b.style.background = band.color;
+    b.querySelector("span").textContent = band.label;
+    document.getElementById("riskAdvice").textContent = band.advice;
+
+    // 7-day trend as an SVG area chart
+    var svg = document.getElementById("trendChart");
+    var W = 600, H = 120, P = 8;
+    var max = Math.max.apply(null, c.trend) * 1.15;
+    var pts = c.trend.map(function(v, i){
+      var x = P + i * (W - 2*P) / (c.trend.length - 1);
+      var y = H - P - (v / max) * (H - 2*P);
+      return [x, y, v];
+    });
+    var line = pts.map(function(p, i){ return (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
+    var area = line + " L" + (W-P) + "," + (H-P) + " L" + P + "," + (H-P) + " Z";
+    var dots = pts.map(function(p){
+      return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="5" fill="' + band.color + '" stroke="#fff" stroke-width="2"/>';
+    }).join("");
+    var labels = pts.map(function(p){
+      return '<text x="' + p[0].toFixed(1) + '" y="' + (p[1]-12).toFixed(1) + '" text-anchor="middle" font-size="13" font-weight="700" fill="#374151">' + p[2] + '</text>';
+    }).join("");
+    svg.innerHTML =
+      '<path d="' + area + '" fill="' + band.color + '" opacity="0.12"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + band.color + '" stroke-width="3.5" stroke-linecap="round"/>' +
+      dots + labels;
+    var total = c.trend.reduce(function(s, v){ return s + v; }, 0);
+    document.getElementById("trendTotal").textContent = total + " total this week";
+    var days = ["Thu","Fri","Sat","Sun","Mon","Tue","Wed"];
+    document.getElementById("trendDays").innerHTML =
+      days.map(function(d){ return "<span>" + d + "</span>"; }).join("");
+
+    // hotspots
+    var hw = document.getElementById("hotspots");
+    hw.innerHTML = "";
+    c.hotspots.forEach(function(h){
+      var d = document.createElement("div");
+      d.className = "hotspot";
+      d.innerHTML = '<div class="hc">' + h.cases + '<small>cases</small></div>' +
+        '<div><h3>🔥 ' + h.area + '</h3><p>' + h.note + '</p></div>';
+      hw.appendChild(d);
+    });
+    document.getElementById("fogging").innerHTML = "💨 " + c.fogging;
+  }
+  citySelect.addEventListener("change", renderCity);
+
+  /* ---- symptom checker ---- */
+  var answers = { feverDays: 0, rash: false, bleeding: false, severePain: false, vomiting: false, drowsy: false };
+
+  function wireChips(id, key, multi){
+    var btns = document.querySelectorAll("#" + id + " .chip");
+    btns.forEach(function(b){
+      b.addEventListener("click", function(){
+        if (multi){
+          var v = b.getAttribute("data-v");
+          var on = b.getAttribute("aria-pressed") === "true";
+          b.setAttribute("aria-pressed", String(!on));
+          answers[v] = !on;
+        } else {
+          btns.forEach(function(x){ x.setAttribute("aria-pressed", "false"); });
+          b.setAttribute("aria-pressed", "true");
+          var raw = b.getAttribute("data-v");
+          answers[key] = (key === "feverDays") ? parseInt(raw, 10) : (raw === "yes");
+        }
+        updateVerdict();
+      });
+    });
+  }
+  function updateVerdict(){
+    var r = triage(answers);
+    var v = document.getElementById("verdict");
+    v.className = "verdict show " + r.level;
+    document.getElementById("verdictTitle").textContent = r.title;
+    document.getElementById("verdictText").textContent = r.text;
+    var fl = document.getElementById("verdictFlags");
+    fl.innerHTML = "";
+    r.flags.forEach(function(f){
+      var li = document.createElement("li");
+      li.textContent = f;
+      fl.appendChild(li);
+    });
+  }
+  wireChips("qFever", "feverDays", false);
+  wireChips("qRash", "rash", false);
+  wireChips("qWarn", null, true);
+  wireChips("qWarn2", null, true);
+  updateVerdict();
+
+  /* ---- prevention checklist (persisted) ---- */
+  var checkState;
+  try { checkState = JSON.parse(store.get("ds_checklist") || "[]"); } catch(e){ checkState = []; }
+  var listEl = document.getElementById("checklist");
+  function renderChecklist(){
+    listEl.innerHTML = "";
+    var done = 0;
+    CHECKLIST.forEach(function(item, i){
+      var isDone = !!checkState[i];
+      if (isDone) done++;
+      var li = document.createElement("li");
+      if (isDone) li.className = "done";
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = isDone;
+      cb.setAttribute("aria-label", item);
+      cb.addEventListener("change", function(){
+        checkState[i] = cb.checked;
+        store.set("ds_checklist", JSON.stringify(checkState));
+        renderChecklist();
+      });
+      var sp = document.createElement("span");
+      sp.textContent = item;
+      li.appendChild(cb); li.appendChild(sp);
+      listEl.appendChild(li);
+    });
+    document.getElementById("checkProgress").style.width = (done / CHECKLIST.length * 100) + "%";
+    document.getElementById("checkLabel").textContent = done + " of " + CHECKLIST.length + " cleared";
+  }
+  renderChecklist();
+
+  var reminderToggle = document.getElementById("reminderToggle");
+  reminderToggle.checked = store.get("ds_reminder") === "on";
+  updateReminderNote();
+  reminderToggle.addEventListener("change", function(){
+    store.set("ds_reminder", reminderToggle.checked ? "on" : "off");
+    updateReminderNote();
+    toast(reminderToggle.checked ? "🔔 Weekly reminder on — every Sunday morning." : "Reminder off.");
+  });
+  function updateReminderNote(){
+    document.getElementById("reminderNote").textContent = reminderToggle.checked
+      ? "On — we'll nudge you every Sunday morning"
+      : "Remind me every Sunday morning";
+  }
+
+  var repEl = document.getElementById("repellents");
+  REPELLENTS.forEach(function(r){
+    var d = document.createElement("div");
+    d.className = "repellent";
+    d.innerHTML = '<span>' + r.name + '</span><span class="r-price">' + r.price + '</span>';
+    repEl.appendChild(d);
+  });
+
+  /* ---- report form ---- */
+  document.getElementById("reportForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var area = document.getElementById("areaInput").value;
+    var type = document.getElementById("typeInput").value;
+    var desc = document.getElementById("descInput").value;
+    var res = validateReport({ area: area, type: type, desc: desc });
+    document.getElementById("fArea").classList.toggle("invalid", res.errors.indexOf("area") !== -1);
+    document.getElementById("fType").classList.toggle("invalid", res.errors.indexOf("type") !== -1);
+    if (!res.ok){ toast("Please fill the highlighted fields."); return; }
+    var ref = makeRef();
+    document.getElementById("confirmText").textContent =
+      "Your report for “" + area.trim() + "” (" + type + ") was logged. The fogging team reviews new reports every evening.";
+    document.getElementById("confirmRef").textContent = "Ref: " + ref;
+    document.getElementById("reportConfirm").classList.add("show");
+    document.getElementById("reportForm").reset();
+    toast("✅ Report submitted — " + ref);
+  });
+
+  /* ---- donor directory ---- */
+  var donorEl = document.getElementById("donorList");
+  DONORS.forEach(function(d){
+    var el = document.createElement("div");
+    el.className = "donor";
+    el.innerHTML = '<div class="bg">' + d.blood + '</div>' +
+      '<div class="d-info"><h3>' + d.name + '</h3><p>' + d.area + ' · ' + d.last + '</p></div>';
+    var btn = document.createElement("button");
+    btn.className = "call"; btn.textContent = "📞 Call";
+    btn.addEventListener("click", function(){
+      toast("Sample listing — phone numbers are masked in this concept demo.");
+    });
+    el.appendChild(btn);
+    donorEl.appendChild(el);
+  });
+
+  renderCity();
+}
+</script>
+</body>
+</html>
